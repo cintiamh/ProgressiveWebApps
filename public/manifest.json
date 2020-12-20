@@ -37,5 +37,14 @@
             "type": "image/png",
             "sizes": "512x512"
         }
-    ]
+    ],
+    "start_url": "/index.html",
+    "scope": ".",
+    "display": "standalone",
+    "orientation": "portrait-primary",
+    "background_color": "#fff",
+    "theme_color": "#3f51b5",
+    "description": "A simple Instagram clone, implementing a lof of PWA love.",
+    "dir": "ltr",
+    "lang": "en-US"
 }
