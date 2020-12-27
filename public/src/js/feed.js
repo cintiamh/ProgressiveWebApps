@@ -2,9 +2,15 @@ var shareImageButton = document.querySelector('#share-image-button');
 var createPostArea = document.querySelector('#create-post');
 var closeCreatePostModalButton = document.querySelector('#close-create-post-modal-btn');
 var sharedMomentsArea = document.querySelector('#shared-moments');
+var form = document.querySelector('form');
+var titleInput = document.querySelector('#title');
+var locationInput = document.querySelector('#location');
 
 function openCreatePostModal() {
   createPostArea.style.display = 'block';
+  setTimeout(function () {
+    createPostArea.style.transform = 'translateY(0)';
+  }, 1);
   if (deferredPrompt) {
     deferredPrompt.prompt();
 
@@ -23,7 +29,8 @@ function openCreatePostModal() {
 }
 
 function closeCreatePostModal() {
-  createPostArea.style.display = 'none';
+  // createPostArea.style.display = 'none';
+  createPostArea.style.transform = 'translateY(100vh)';
 }
 
 shareImageButton.addEventListener('click', openCreatePostModal);
@@ -98,21 +105,45 @@ fetch(url)
     updateUI(dataArray);
   });
 
-if ('caches' in window) {
-  caches.match(url)
-    .then(function (response) {
-      if (response) {
-        return response.json();
-      }
-    })
+
+
+if ('indexedDB' in window) {
+  readAllData('posts')
     .then(function (data) {
       if (!networkDataReceived) {
-        var dataArray = [];
-        for (key in data) {
-          dataArray.push(data[key]);
-        }
-        console.log('From cache', dataArray);
-        updateUI(dataArray);
+        console.log('From cache', data);
+        updateUI(data);
       }
-  })
+    });
 }
+
+form.addEventListener('submit', function (event) {
+  event.preventDefault();
+  if (titleInput.value.trim() === '' || locationInput.value.trim() === '') {
+    alert('Please enter valid data!');
+    return;
+  }
+  closeCreatePostModal();
+  if ('serviceWorker' in navigator && 'SyncManager' in window) {
+    navigator.serviceWorker.ready
+      .then(function (sw) {
+        var post = {
+          id: new Date().toISOString(),
+          title: titleInput.value,
+          location: locationInput.value
+        };
+        writeData('sync-posts', post)
+          .then(function () {
+            sw.sync.register('sync-new-post');    
+          })
+          .then(function () {
+            var snackbarContainer = document.querySelector('#confirmation_toast');
+            var data = { message: 'Your Post was saved for syncing!' };
+            snackbarContainer.MaterialSnackback.showSnackbar(data);
+          })
+          .catch(function (err) {
+            console.log(err);
+        })
+      })
+  }
+})
